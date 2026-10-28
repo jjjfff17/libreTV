@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">LibreTV</string>
+    <!-- 启动地址：已写入分享码，冷启动直接过网关门禁，不怕 cookie 过期 -->
+    <string name="app_url">https://libretv-tv-65752.app.workbuddy.host/?sharecode=I7GLYKL3VS</string>
+</resources>
