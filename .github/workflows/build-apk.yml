@@ -18,11 +18,19 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-34 build-tools;34.0.0'
+
+      - name: Accept SDK licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Restore keystore from cache
         uses: actions/cache@v4
         with:
           path: keystore.jks
-          key: android-keystone-v1
+          key: android-keystore-v1
 
       - name: Generate keystore if missing
         run: |
@@ -37,11 +45,13 @@ jobs:
         env:
           KS_PWD: ${{ secrets.KS_PWD }}
 
-      - name: Build signed release APK
-        uses: gradle/gradle-build-action@v3
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.5
-          arguments: assembleRelease
+
+      - name: Build signed release APK
+        run: gradle assembleRelease
         env:
           KEYSTORE_FILE: keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KS_PWD }}
