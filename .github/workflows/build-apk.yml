@@ -1,0 +1,54 @@
+name: Build LibreTV APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Restore keystore from cache
+        uses: actions/cache@v4
+        with:
+          path: keystore.jks
+          key: android-keystone-v1
+
+      - name: Generate keystore if missing
+        run: |
+          if [ ! -f keystore.jks ]; then
+            keytool -genkeypair -v \
+              -keystore keystore.jks \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -alias libretv \
+              -storepass "$KS_PWD" -keypass "$KS_PWD" \
+              -dname "CN=LibreTV,O=LibreTV,C=CN"
+          fi
+        env:
+          KS_PWD: ${{ secrets.KS_PWD }}
+
+      - name: Build signed release APK
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.5
+          arguments: assembleRelease
+        env:
+          KEYSTORE_FILE: keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KS_PWD }}
+          KEY_ALIAS: libretv
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: libretv-apk
+          path: app/build/outputs/apk/release/*.apk
