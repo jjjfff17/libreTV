@@ -29,14 +29,14 @@ jobs:
       - name: Restore keystore from cache
         uses: actions/cache@v4
         with:
-          path: keystore.jks
+          path: ${{ github.workspace }}/keystore.jks
           key: android-keystore-v1
 
       - name: Generate keystore if missing
         run: |
-          if [ ! -f keystore.jks ]; then
+          if [ ! -f "$KEYSTORE_PATH" ]; then
             keytool -genkeypair -v \
-              -keystore keystore.jks \
+              -keystore "$KEYSTORE_PATH" \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -alias libretv \
               -storepass "$KS_PWD" -keypass "$KS_PWD" \
@@ -44,6 +44,7 @@ jobs:
           fi
         env:
           KS_PWD: ${{ secrets.KS_PWD }}
+          KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -53,7 +54,7 @@ jobs:
       - name: Build signed release APK
         run: gradle assembleRelease
         env:
-          KEYSTORE_FILE: keystore.jks
+          KEYSTORE_FILE: ${{ github.workspace }}/keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KS_PWD }}
           KEY_ALIAS: libretv
 
